@@ -1,0 +1,38 @@
+name: Morning ping to Tomer
+
+on:
+  schedule:
+    # 05:50 Israel time in winter (UTC+2) and in summer (UTC+3).
+    # The script sleeps until a random time between 06:00 and 06:30 and
+    # exits on whichever run is the wrong one for the current season.
+    - cron: "50 2 * * *"
+    - cron: "50 3 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Send right now (ignore time window and days)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: morning-ping
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/morning_ping.py
+        env:
+          GREEN_API_ID_INSTANCE: ${{ secrets.GREEN_API_ID_INSTANCE }}
+          GREEN_API_TOKEN: ${{ secrets.GREEN_API_TOKEN }}
+          GREEN_API_URL: ${{ secrets.GREEN_API_URL }}
+          TOMER_PHONE: ${{ secrets.TOMER_PHONE }}
+          MY_PHONE: ${{ secrets.MY_PHONE }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          SEND_DAYS: ${{ vars.SEND_DAYS }}
+          FORCE: ${{ inputs.force }}
